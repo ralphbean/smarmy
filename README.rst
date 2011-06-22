@@ -1,11 +1,11 @@
-The auspicious and venerable Leafy Miracle
-==========================================
+Smarmy
+======
 
 ::
 
 |-----------------------------------------------|
 |         _______________                       |
-|        < leafymiracle! >                      |
+|        < smarm-a-lade! >                      |
 |         ---------------                       |
 |                \                              |
 |                 \     .---. __                |
@@ -28,6 +28,13 @@ The auspicious and venerable Leafy Miracle
 |                      '-'                      |
 |_______________________________________________|
 
+What?
+~~~~~
+
+Smarmy is a fork of the `Leafy Miracle <http://leafy-miracle.rhcloud.com>`_.
+The original project graphed package dependencies in Fedora.  Smarmy gets its
+data from the `Python Package Index <http://pypi.python.org>`_.
+
 Features
 ~~~~~~~~
 
@@ -42,7 +49,7 @@ Features
 Source
 ~~~~~~
 
-* `Git repository <http://fedorapeople.org/gitweb?p=lmacken/public_git/leafymiracle>`_ on fedorapeople.
+* `Git repository <https://github.com/ralphbean/smarmy>`_ on github.
 
 Running
 ~~~~~~~
@@ -50,10 +57,10 @@ Running
 ::
 
    sudo yum -y install python-virtualenv
-   git clone git://fedorapeople.org/~lmacken/leafymiracle && cd leafymiracle
+   git clone git://github.com/ralphbean/smarmy.git && cd smarmy
    virtualenv env && source env/bin/activate
    python setup.py develop
-   python leafymiracle/populate.py
+   python smarmy/populate.py
    paster serve development.ini
 
 Authors

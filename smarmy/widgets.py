@@ -22,7 +22,7 @@ from tw2.core.resources import JSLink
 
 import docutils.examples
 
-from leafymiracle import models
+from smarmy import models
 
 # Using mihmo's mathematically nice colors for fedora.
 # http://mihmo.livejournal.com/37350.html
@@ -30,8 +30,8 @@ triads = ["#3c6eb4", "#b53c6e", "#6eb53c"]
 triads_dark = ["#294172", "#732942", "#427329"]
 
 
-class LeafyGraph(SQLARadialGraph):
-    id = 'leafy_graph'
+class SmarmyGraph(SQLARadialGraph):
+    id = 'smarmy_graph'
     entities = [models.Root, models.Category, models.Group, models.Package]
     base_url = '/data'
     width = '1000'
@@ -72,7 +72,7 @@ class LeafyGraph(SQLARadialGraph):
                 domElement.style.color = '%s';
        })""" % (triads[0], triads_dark[0]))
 
-def leafy_readme():
+def smarmy_readme():
     """ Ridiculous """
     root = '/'.join(__file__.split('/')[:-2])
     fname = root + '/README.rst'
@@ -80,27 +80,27 @@ def leafy_readme():
         readme = f.read()
         return docutils.examples.html_body(unicode(readme))
 
-class LeafyDialog(DialogWidget):
-    id = 'leafy_dialog'
+class SmarmyDialog(DialogWidget):
+    id = 'smarmy_dialog'
     options = {
         'title' : 'README.rst',
         'autoOpen' : False,
         'width' : 1000
     }
-    value = leafy_readme()
+    value = smarmy_readme()
 
 searchbar_html_support_js = JSLink(
     link='/static/js/searchbar_html_support.js')
 
-class LeafySearchbar(CategoryAutocompleteWidget):
+class SmarmySearchbar(CategoryAutocompleteWidget):
     def prepare(self):
         # Add this javascript hack into the client that makes jquery-ui
         # render html embedding in JSON.  :D:D:D:D:D
         self.resources.append(searchbar_html_support_js)
-        super(LeafySearchbar, self).prepare()
+        super(SmarmySearchbar, self).prepare()
 
-    id = 'leafy_searchbar'
-    value = "Leafy Searchbar"
+    id = 'smarmy_searchbar'
+    value = "Smarmy Searchbar"
     tags = []
     options={
         'source' : JSSymbol(

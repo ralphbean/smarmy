@@ -105,8 +105,8 @@ def build_comps():
 
 
 if __name__ == '__main__':
-    print "Initializing LeafyMiracle..."
-    engine = create_engine('sqlite:///leafymiracle.db')
+    print "Initializing Smarmy..."
+    engine = create_engine('sqlite:///smarmy.db')
     initialize_sql(engine)
     build_comps()
     try:

@@ -16,8 +16,8 @@
 from pyramid.config import Configurator
 from sqlalchemy import engine_from_config
 
-from leafymiracle.resources import appmaker
-from leafymiracle.widgets import LeafyGraph
+from smarmy.resources import appmaker
+from smarmy.widgets import SmarmyGraph
 
 def main(global_config, **settings):
     """ This function returns a WSGI application.
@@ -25,19 +25,19 @@ def main(global_config, **settings):
     engine = engine_from_config(settings, 'sqlalchemy.')
     get_root = appmaker(engine)
     config = Configurator(settings=settings, root_factory=get_root)
-    config.add_view('leafymiracle.views.view_root', 
-                    context='leafymiracle.resources.MyApp', 
+    config.add_view('smarmy.views.view_root', 
+                    context='smarmy.resources.MyApp', 
                     renderer="templates/root.pt")
-    config.add_view('leafymiracle.views.view_model',
-                    context='leafymiracle.models.Root',
+    config.add_view('smarmy.views.view_model',
+                    context='smarmy.models.Root',
                     renderer="templates/model.pt")
-    config.add_view('leafymiracle.views.view_search',
-                    context='leafymiracle.resources.SearchHandler',
+    config.add_view('smarmy.views.view_search',
+                    context='smarmy.resources.SearchHandler',
                     xhr=True)
     config.add_static_view(name='static', path='static')
 
     # Create the data view for our tw2.jit.SQLARadialGraph
-    jit_view = lambda context, request: LeafyGraph.request(request)
+    jit_view = lambda context, request: SmarmyGraph.request(request)
     config.add_route('data', '/data', view=jit_view, xhr=True)
 
     return config.make_wsgi_app()

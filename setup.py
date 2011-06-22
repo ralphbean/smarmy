@@ -14,6 +14,7 @@ requires = [
     "formencode",
     "tw2.jit>=0.2.8b27",
     "tw2.jqplugins.ui",
+    "tw2.jqplugins.jqgrid",
     "kitchen",
     "docutils",
     ]
@@ -21,9 +22,9 @@ requires = [
 if sys.version_info[:3] < (2,5,0):
     requires.append('pysqlite')
 
-setup(name='leafymiracle',
+setup(name='smarmy',
       version='0.0',
-      description='leafymiracle',
+      description='smarmy',
       long_description=README,
       classifiers=[
         "Programming Language :: Python",
@@ -41,10 +42,10 @@ setup(name='leafymiracle',
       zip_safe=False,
       install_requires = requires,
       tests_require = requires,
-      test_suite="leafymiracle",
+      test_suite="smarmy",
       entry_points = """\
       [paste.app_factory]
-      main = leafymiracle:main
+      main = smarmy:main
       """,
       paster_plugins=['pyramid'],
       )
