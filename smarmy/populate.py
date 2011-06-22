@@ -17,100 +17,109 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
 from kitchen.text.converters import to_unicode
 
-from models import Root, Category, Group, Package, DBSession, initialize_sql
+from models import Root
+from models import Package
+from models import Release
+from models import License
+from models import Author
+from models import Maintainer
+from models import Classifier
+from models import Keyword
+from models import DBSession
+from models import initialize_sql
 
-from yum import YumBase
-yumobj = YumBase()
-yumobj.setCacheDir()
+import xmlrpclib
 
-def populate(comps='comps-f16', do_dependencies=True):
-    from yum.comps import Comps
-
+def populate():
+    client = xmlrpclib.ServerProxy('http://pypi.python.org/pypi')
     session = DBSession()
 
-    c = Comps()
-    c.add('comps/%s.xml' % comps)
-
-    for group in c.groups:
-        g = Group(id=group.groupid, name=group.name, description=group.description)
-        session.add(g)
-
-        for package in group.packages:
-            p = session.query(Package).filter_by(name=to_unicode(package)).first()
-            if not p:
-                p = Package(name=package)
-                session.add(p)
-            p.group = g
-
-        session.flush()
-
-    root = Root(name=u'Fedora')
+    root = Root(name=u'PyPI')
     session.add(root)
     session.flush()
 
-    for category in c.categories:
-        c = Category(id=category.categoryid, name=category.name,
-                     description=category.description)
-        session.add(c)
-        root.categories.append(c)
-        for group in category.groups:
-            g = session.query(Group).filter_by(group_id=to_unicode(group)).first()
-            if not g:
-                print "Cannot find group: %s" % group
-            else:
-                g.category = c
+    for package in client.list_packages():
+        print "Processing:", package
 
+        # Query for it first...
+        if Package.query.filter_by(name=package).count() > 0:
+            print "Package '%s' is already in the DB.  Skipping." % package
+            continue
+
+        p = Package(name=package, root=root)
+        session.add(p)
         session.flush()
 
-    if do_dependencies:
-        for package in session.query(Package).all():
-            add_dependencies(package, session)
+        for release in client.package_releases(package):#show_hidden=True):
+            print "   ", package, release
+
+            data = client.release_data(package, release)
+
+            r = Release(
+                name=release,
+                package=p,
+                summary=data.get('summary', '')
+            )
+
+            for classifier in data['classifiers']:
+                query = Classifier.query.filter_by(name=classifier)
+                if query.count() == 0:
+                    k = Classifier(name=classifier)
+                    session.add(k)
+
+                k = Classifier.query.filter_by(name=classifier).one()
+                r.classifiers.append(k)
+
+            for keyword in (data['keywords'] or '').split():
+                query = Keyword.query.filter_by(name=keyword)
+                if query.count() == 0:
+                    k = Keyword(name=keyword)
+                    session.add(k)
+
+                k = Keyword.query.filter_by(name=keyword).one()
+                r.keywords.append(k)
+
+            if 'maintainer' in data:
+                query = Maintainer.query.filter_by(name=data['maintainer'])
+                if query.count() == 0:
+                    a = Maintainer(name=data['maintainer'],
+                               email=data.get('maintainer_email'))
+                    session.add(a)
+
+                a = Maintainer.query.filter_by(name=data['maintainer']).one()
+                r.maintainer = a
+
+            if 'author' in data:
+                query = Author.query.filter_by(name=data['author'])
+                if query.count() == 0:
+                    a = Author(name=data['author'],
+                               email=data.get('author_email'))
+                    session.add(a)
+
+                a = Author.query.filter_by(name=data['author']).one()
+                r.author = a
+
+            if 'license' in data:
+                query = License.query.filter_by(name=data['license'])
+                if query.count() == 0:
+                    l = License(name=data['license'])
+                    session.add(l)
+
+                l = License.query.filter_by(name=data['license']).one()
+                r.license = l
+
+            session.add(r)
+            session.flush()
 
     session.commit()
-
-def add_dependencies(package, session):
-    deps = set()
-    pkg = yumobj.pkgSack.searchNevra(name=package.name)
-    if not pkg:
-        print "Cannot find package: %s" % package.name
-        return
-
-    deps_d = yumobj.findDeps([pkg[0]])
-    for dep in deps_d.itervalues():
-        for req in dep.itervalues():
-            deps.add(req[0].name)
-
-    for dep in deps:
-        base_query = session.query(Package).filter_by(name=dep)
-        if base_query.count() == 0:
-            _new_package = Package(name=dep)
-            session.add(_new_package)
-            session.flush()
-            add_dependencies(_new_package, session)
-
-        dep_as_package = base_query.one()
-
-        if dep_as_package not in package.dependencies:
-            package.dependencies.append(dep_as_package)
-
-    print "package: %s has (%i/%i) deps" % (
-        package.name, len(package.dependencies), len(deps))
-
-    session.flush()
-
-def build_comps():
-    import subprocess
-    subprocess.call('git clone git://git.fedorahosted.org/comps.git', shell=True)
-    subprocess.call('make comps-f16.xml', cwd='comps', shell=True)
-
 
 if __name__ == '__main__':
     print "Initializing Smarmy..."
     engine = create_engine('sqlite:///smarmy.db')
     initialize_sql(engine)
-    build_comps()
     try:
         populate()
         print "Complete!"
     except IntegrityError, e:
+        print "Got an Integrity Error:", str(e)
         DBSession.rollback()

@@ -18,14 +18,11 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, scoped_session, sessionmaker, backref
 
 from kitchen.text.converters import to_unicode
+import hashlib
 
 DBSession = scoped_session(sessionmaker())
 Base = declarative_base()
 Base.query = DBSession.query_property()
-
-# Icon Hack. Throw these in a config file.
-icons = ['admin-tools', 'apps', 'authoring-and-publishing', 'base-system', 'base-x', 'clustering', 'content', 'core', 'desktops', 'development', 'development-tools', 'dial-up', 'directory-server', 'eclipse', 'editors', 'education', 'electronic-lab', 'engineering-and-scientific', 'font-design', 'fonts', 'games', 'gnome-desktop', 'gnome-software-development', 'graphical-internet', 'graphics', 'hardware-support', 'haskell', 'input-methods', 'java-development', 'java', 'kde-desktop', 'kde-software-development', 'language-support', 'legacy-fonts', 'legacy-network-server', 'lxde-desktop', 'mail-server', 'mysql', 'office', 'printing', 'ruby', 'server-cfg', 'servers', 'sound-and-video', 'sql-server', 'sugar-desktop', 'system-tools', 'text-internet', 'uncategorized', 'virtualization', 'window-managers', 'xfce-desktop', 'xfce-software-development', 'x-software-development']
-icon_link = '<img src="http://lmacken.fedorapeople.org/comps-extras/%s.png" style="vertical-align:middle;" /> %s'
 
 
 class Root(Base):
@@ -34,107 +31,119 @@ class Root(Base):
     id = Column(Integer, primary_key=True)
     name = Column(Unicode(255), unique=True)
 
-    categories = relationship("Category", backref="root")
+    packages = relationship("Package", backref="root")
 
     def __init__(self, name):
         self.name = to_unicode(name)
 
     def __unicode__(self):
-        return icon_link % (self.name.lower(), self.name)
-
-
-class Category(Base):
-    __tablename__ = 'categories'
-
-    id = Column(Integer, primary_key=True)
-    category_id = Column(Unicode(255), unique=True)
-    name = Column(Unicode(255), unique=True)
-    description = Column(UnicodeText)
-    root_id = Column(Integer, ForeignKey('root.id'))
-
-    groups = relationship("Group", backref="category")
-
-    def __init__(self, id, name, description):
-        self.category_id = to_unicode(id)
-        self.name = to_unicode(name)
-        self.description = to_unicode(description)
-
-    def __unicode__(self):
-        if self.category_id in icons:
-            return icon_link % (self.category_id, self.name)
         return self.name
-
-
-class Group(Base):
-    __tablename__ = 'groups'
-
-    id = Column(Integer, primary_key=True)
-    group_id = Column(Unicode(255), unique=True)
-    name = Column(Unicode(255), unique=True)
-    description = Column(UnicodeText)
-    category_id = Column(Integer, ForeignKey('categories.id'))
-
-    packages = relationship("Package", backref="group")
-
-    def __init__(self, id, name, description):
-        self.group_id = to_unicode(id)
-        self.name = to_unicode(name)
-        self.description = to_unicode(description)
-
-    def __unicode__(self):
-        if self.group_id in icons:
-            return icon_link % (self.group_id, self.name)
-        return self.name
-
 
 class Package(Base):
     __tablename__ = 'packages'
 
     id = Column(Integer, primary_key=True)
     name = Column(Unicode(255), unique=True)
-
-    group_id = Column(Integer, ForeignKey('groups.id'))
-
-    def __init__(self, name):
-        self.name = to_unicode(name)
+    releases = relationship("Release", backref="package")
+    root_id = Column(Integer, ForeignKey('root.id'))
 
     def __unicode__(self):
-        return self.name
+        return unicode(self.name)
+
+
+classifiers_mapping = Table(
+    'releases_classifiers_mapping', Base.metadata,
+    Column('classifier_id', Integer,
+           ForeignKey('classifiers.id'), primary_key=True),
+    Column('release_id', Integer,
+           ForeignKey('releases.id'), primary_key=True))
+
+keywords_mapping = Table(
+    'releases_keywords_mapping', Base.metadata,
+    Column('keyword_id', Integer,
+           ForeignKey('keywords.id'), primary_key=True),
+    Column('release_id', Integer,
+           ForeignKey('releases.id'), primary_key=True))
+
+class Release(Base):
+    __tablename__ = 'releases'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(Unicode(255))
+    summary = Column(Unicode(1024))
+    long_description = Column(Unicode(4096))
+
+    package_id = Column(Integer, ForeignKey('packages.id'))
+    license_id = Column(Integer, ForeignKey('licenses.id'))
+    author_id       = Column(Integer, ForeignKey('authors.id'))
+    maintainer_id   = Column(Integer, ForeignKey('maintainers.id'))
+
+    keywords = relationship(
+        "Keyword", secondary=keywords_mapping,
+        backref='releases')
+    classifiers = relationship(
+        "Classifier", secondary=classifiers_mapping,
+        backref='releases')
+
+    def __unicode__(self):
+        return u"%s - %s" % (unicode(self.package), self.name)
 
     def __jit_data__(self):
         return {
-            'hover_html' : """
-            <h2>{name}</h2>
-            <li><img src="https://admin.fedoraproject.org/community/images/16_pkgdb.png"/><a href="https://admin.fedoraproject.org/community/?package={name}#package_maintenance/details/downloads" target="_blank">Downloads</a></li>
-            <li><img src="https://admin.fedoraproject.org/community/images/16_koji.png"/><a href="http://koji.fedoraproject.org/koji/search?terms={name}&type=package&match=exact" target="_blank">Builds</a></li>
-            <li><img src="https://admin.fedoraproject.org/community/images/16_bodhi.png"/><a href="https://admin.fedoraproject.org/updates/{name}" target="_blank">Updates</a></li>
-            <li><img src="https://admin.fedoraproject.org/community/images/16_bugs.png"/><a href="https://admin.fedoraproject.org/pkgdb/acls/bugs/{name}" target="_blank">Bugs</a></li>
-            <li><img src="https://admin.fedoraproject.org/community/images/16_sources.png"/><a href="http://pkgs.fedoraproject.org/gitweb/?p={name}.git" target="_blank">Source</a></li>
-            <li><img src="https://admin.fedoraproject.org/community/images/16_pkgdb.png"/><a href="https://admin.fedoraproject.org/pkgdb/acls/name/{name}" target="_blank">Package Info</a></li>
-            </ul>
-            """.format(**self.__dict__),
-
-            "traversal_costs" : {
-                "group" : 2
-            },
+            'hover_html': """hai""",
+            "traversal_costs": {},
         }
 
-dependencies_mapping = Table(
-    'packages_dependencies_mapping', Base.metadata,
-    Column('depender_id', Integer,
-           ForeignKey('packages.id'), primary_key=True),
-    Column('dependee_id', Integer,
-           ForeignKey('packages.id'), primary_key=True))
+class Keyword(Base):
+    __tablename__ = 'keywords'
+    id = Column(Integer, primary_key=True)
+    name = Column(Unicode(255), unique=True)
+    def __unicode__(self):
+        return self.name
 
-Package.__mapper__.add_property('dependencies', relationship(
-    Package,
-    primaryjoin=Package.id==dependencies_mapping.c.dependee_id,
-    secondaryjoin=dependencies_mapping.c.depender_id==Package.id,
-    secondary=dependencies_mapping,
-    backref=backref('dependants'),
-    doc="List of this packages' dependencies!",
-))
+class Classifier(Base):
+    __tablename__ = 'classifiers'
+    id = Column(Integer, primary_key=True)
+    name = Column(Unicode(255), unique=True)
+    def __unicode__(self):
+        return self.name
 
+
+class GravatarMixin(object):
+    def avatar_link(self, s=24, d='mm'):
+        hash = 'd41d8cd98f00b204e9800998ecf8427e'
+        if self.email:
+            hash = hashlib.md5(self.email).hexdigest()
+        return "http://www.gravatar.com/avatar/%s?s=%i&d=%s" % (hash, s, d)
+
+
+class Author(Base, GravatarMixin):
+    __tablename__ = 'authors'
+    id = Column(Integer, primary_key=True)
+    name = Column(Unicode(255), unique=True)
+    email = Column(Unicode(255))
+    releases = relationship("Release", backref="author")
+    def __unicode__(self):
+        return "Author:  <img src='%s' /> %s" % (
+            self.avatar_link(), (self.name or "'None'"))
+
+class Maintainer(Base, GravatarMixin):
+    __tablename__ = 'maintainers'
+    id = Column(Integer, primary_key=True)
+    name = Column(Unicode(255), unique=True)
+    email = Column(Unicode(255))
+    releases = relationship("Release", backref="maintainer")
+    def __unicode__(self):
+        return "Maintainer:  <img src='%s' /> %s" % (
+            self.avatar_link(), (self.name or "'None'"))
+
+class License(Base):
+    __tablename__ = 'licenses'
+    id = Column(Integer, primary_key=True)
+    name = Column(Unicode(255), unique=True)
+    releases = relationship("Release", backref="license")
+    def __unicode__(self):
+        return "License:  " + (self.name or "'None'")
 
 
 def initialize_sql(engine):

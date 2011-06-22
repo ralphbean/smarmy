@@ -32,7 +32,17 @@ triads_dark = ["#294172", "#732942", "#427329"]
 
 class SmarmyGraph(SQLARadialGraph):
     id = 'smarmy_graph'
-    entities = [models.Root, models.Category, models.Group, models.Package]
+    entities = [
+        models.Root,
+        models.Package,
+        models.Release,
+        models.License,
+        models.Author,
+        models.Maintainer,
+        models.Keyword,
+        models.Classifier,
+    ]
+
     base_url = '/data'
     width = '1000'
     height = '750'

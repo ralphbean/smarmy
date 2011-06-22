@@ -37,7 +37,9 @@ def view_model(context, request):
 
 def view_search(context, request):
     term = request.params['term']
-    cats = request.params.get('cats', 'Category,Group,Package')
+    cats = request.params.get(
+        'cats',
+        'Package,License,Release,Author,Maintainer,Keyword,Classifier')
 
     data = context.search(term, cats)
 

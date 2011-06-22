@@ -26,15 +26,27 @@ class SearchHandler(object):
             return {'data':[]}
 
         attrs = {
-            'Category' : {
-                'search_on' : ['name', 'description'],
+            'Release' : {
+                'search_on' : ['name', 'summary', 'long_description'],
             },
-            'Group' : {
-                'search_on' : ['name', 'description'],
+            'License' : {
+                'search_on' : ['name'],
             },
             'Package' : {
                 'search_on' : ['name'],
-            }
+            },
+            'Author' : {
+                'search_on' : ['name', 'email'],
+            },
+            'Maintainer' : {
+                'search_on' : ['name', 'email'],
+            },
+            'Classifier': {
+                'search_on' : ['name'],
+            },
+            'Keyword': {
+                'search_on' : ['name'],
+            },
         }
         srch = '%%%s%%' % term
         cats = cats.split(',')
@@ -49,7 +61,9 @@ class SearchHandler(object):
                   for srch_attr in attrs[cat]['search_on']]
             ))
             results += [[unicode(e), e.id, cat] for e in entries]
-
+        
+        print "*" * 40
+        print len(results)
         data = {
             'data' : [
                 {
