@@ -32,8 +32,10 @@ What?
 ~~~~~
 
 Smarmy is a fork of the `Leafy Miracle <http://leafy-miracle.rhcloud.com>`_.
-The original project graphed package dependencies in Fedora.  Smarmy gets its
-data from the `Python Package Index <http://pypi.python.org>`_.
+
+The original project graphed package dependencies in Fedora.
+
+Smarmy gets its data from the `Python Package Index <http://pypi.python.org>`_.
 
 Features
 ~~~~~~~~
