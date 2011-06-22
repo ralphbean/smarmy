@@ -61,9 +61,7 @@ class SearchHandler(object):
                   for srch_attr in attrs[cat]['search_on']]
             ))
             results += [[unicode(e), e.id, cat] for e in entries]
-        
-        print "*" * 40
-        print len(results)
+
         data = {
             'data' : [
                 {
