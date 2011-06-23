@@ -1,0 +1,38 @@
+#smarmy_graph {
+        width: 100%;
+}
+
+#smarmy_graph-canvaswidget {
+        margin: auto;
+}
+
+.outer {
+        width: 100%;
+        margin-top:-8px;
+        margin-bottom:-15px;
+}
+
+img.center {
+        position: absolute;
+        right:0px;
+        bottom:0px;
+        display: block;
+        border: 0;
+}
+
+.searchbar-wrapper {
+        position: absolute;
+        float: right;
+        float: top;
+}
+
+.ui-autocomplete {
+        font-size: 75%;
+        width: 180px;
+
+        /* vertical scrollbar on */
+        max-height: 600px;
+        overflow-y: auto;
+        /* prevent horizontal scrollbar */
+        overflow-x: hidden;
+}

@@ -70,3 +70,13 @@ Authors
 
 * Luke Macken <lmacken@redhat.com>
 * Ralph Bean <ralph.bean@gmail.com>
+
+Logo
+~~~~
+
+The logo was adapted from `an image
+<http://www.flickr.com/photos/lenore-m/5348592302/>`_ by
+Lenore M. Edman, www.evilmadscientist.com, which was licensed under
+the `Creative Commons Attribution 2.0
+<http://creativecommons.org/licenses/by/2.0/>`_ license.
+
