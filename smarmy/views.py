@@ -26,8 +26,7 @@ def view_root(context, request):
     return HTTPFound(location='/1')
 
 def view_model(context, request):
-    # TODO -- we need a fedora jquery-ui theme sitting around.
-    set_ui_theme_name('hot-sneaks')
+    set_ui_theme_name('south-street')
     return {'item':context, 'project':'smarmy',
             'jitwidget': SmarmyGraph(rootObject=context),
             'dialogwidget': SmarmyDialog,
