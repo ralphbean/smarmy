@@ -38,7 +38,7 @@ def view_search(context, request):
     term = request.params['term']
     cats = request.params.get(
         'cats',
-        'Package,License,Release,Author,Maintainer,Keyword,Classifier')
+        'Author,Package,License,Release,Maintainer,Keyword,Classifier')
 
     data = context.search(term, cats)
 
