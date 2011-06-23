@@ -30,6 +30,8 @@ triads = ["#3c6eb4", "#b53c6e", "#6eb53c"]
 triads_dark = ["#294172", "#732942", "#427329"]
 
 
+
+
 class SmarmyGraph(SQLARadialGraph):
     id = 'smarmy_graph'
     entities = [
@@ -60,8 +62,8 @@ class SmarmyGraph(SQLARadialGraph):
 
     backgroundcolor = '#FFFFFF'
     background = { 'CanvasStyles': { 'strokeStyle' : '#FFFFFF' } }
-    Node = { 'color' : triads[1] }
-    Edge = { 'color' : triads[2], 'lineWidth':1.5, }
+    Node = { 'color' : '#8dc262' }
+    Edge = { 'color' : '#312e25', 'lineWidth':1.5, }
 
     # Override the label style
     onPlaceLabel = JSSymbol(src="""
@@ -80,7 +82,7 @@ class SmarmyGraph(SQLARadialGraph):
                 domElement.style.color = '%s';
             else
                 domElement.style.color = '%s';
-       })""" % (triads[0], triads_dark[0]))
+       })""" % ('#ef7815', '#ef7815'))
 
 def smarmy_readme():
     """ Ridiculous """

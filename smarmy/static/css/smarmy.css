@@ -24,6 +24,7 @@ img.center {
         position: absolute;
         float: right;
         float: top;
+        margin-top: 10px;
 }
 
 .ui-autocomplete {
