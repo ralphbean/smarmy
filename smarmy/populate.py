@@ -13,6 +13,38 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import xmlrpclib
+
+def ingest_package(package, tries=0):
+    print "Processing package", package
+    result = {
+        'name': package,
+        'releases':[]
+    }
+
+    # Bail if we keep failing.
+    if tries > 3:
+        print " ** Some error collecting package", package
+        return result
+
+    try:
+        client = xmlrpclib.ServerProxy('http://pypi.python.org/pypi')
+
+
+        for release in client.package_releases(package):#show_hidden=True):
+            data = client.release_data(package, release)
+            result['releases'].append({
+                'name': release,
+                'data': data
+            })
+    except Exception as e:
+        return ingest_package(package, tries+1)
+    return result
+
+
+import multiprocessing as mp
+pool = mp.Pool(100)
+
 from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
 from kitchen.text.converters import to_unicode
@@ -28,18 +60,20 @@ from models import Keyword
 from models import DBSession
 from models import initialize_sql
 
-import xmlrpclib
-
 def populate():
-    client = xmlrpclib.ServerProxy('http://pypi.python.org/pypi')
     session = DBSession()
-
     root = Root(name=u'PyPI')
     session.add(root)
-    session.flush()
 
-    for package in client.list_packages():
-        print "Processing:", package
+    client = xmlrpclib.ServerProxy('http://pypi.python.org/pypi')
+    packages = client.list_packages()
+
+    # Do it in parallel to go faster
+    results = pool.map(ingest_package, packages)
+
+    for i, result in enumerate(results):
+        package = result['name']
+        print "Populating DB with:", i, package
 
         # Query for it first...
         if Package.query.filter_by(name=package).count() > 0:
@@ -48,12 +82,10 @@ def populate():
 
         p = Package(name=package, root=root)
         session.add(p)
-        session.flush()
 
-        for release in client.package_releases(package):#show_hidden=True):
-            print "   ", package, release
-
-            data = client.release_data(package, release)
+        for release_data in result['releases']:
+            release = release_data['name']
+            data = release_data['data']
 
             r = Release(
                 name=release,
@@ -83,7 +115,7 @@ def populate():
                 query = Maintainer.query.filter_by(name=data['maintainer'])
                 if query.count() == 0:
                     a = Maintainer(name=data['maintainer'],
-                               email=data.get('maintainer_email'))
+                                   email=data.get('maintainer_email'))
                     session.add(a)
 
                 a = Maintainer.query.filter_by(name=data['maintainer']).one()
@@ -109,9 +141,9 @@ def populate():
                 r.license = l
 
             session.add(r)
-            session.flush()
 
     session.commit()
+
 
 if __name__ == '__main__':
     print "Initializing Smarmy..."
